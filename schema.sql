@@ -3,9 +3,6 @@ CREATE TABLE categories (
     id INTEGER AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(30),
     description VARCHAR(60),
-    isActive TEXT,
-    sortOrder INTEGER,
-    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 CREATE TABLE products (
     id INTEGER AUTO_INCREMENT PRIMARY KEY,
@@ -16,10 +13,8 @@ CREATE TABLE products (
     cat_id INTEGER,
     brand VARCHAR(100),
     model VARCHAR(100),
-    specifications TEXT,
+    specifications VARCHAR(255),
     stockQuantity INTEGER,
-    isActive INTEGER,
-    isFeatured INTEGER,
     createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (cat_id) REFERENCES categories(id)
 );
@@ -51,11 +46,6 @@ CREATE TABLE customers (
     phone VARCHAR(30),
     email VARCHAR(70),
     address VARCHAR(50),
-    totalOrder INTEGER,
-    totalSpent INTEGER,
-    firstOrderAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    lastOrderAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    isVip INTEGER,
     createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 CREATE TABLE bargain_offers (

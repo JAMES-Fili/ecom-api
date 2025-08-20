@@ -1,70 +1,82 @@
 <?php
 include 'db.php';
 
-header("Content-Type: application/json");
-
 $method = $_SERVER['REQUEST_METHOD'];
-$input = json_decode(file_get_contents('php://input'), true);
 
 switch ($method) {
     case 'GET':
-        if (isset($_GET['id'])) {
-            $id = $_GET['id'];
-            $result = $conn->query("SELECT * FROM products WHERE id=$id");
-            $data = $result->fetch_assoc();
-            echo json_encode($data);
-        } else {
-            $result = $conn->query("SELECT * FROM products");
-            $products = [];
-            while ($row = $result->fetch_assoc()) {
-                $products[] = $row;
-            }
-            echo json_encode($products);
+        // Retrieve all products
+        $sql = "SELECT * FROM products";
+        $result = $conn->query($sql);
+
+        $products = [];
+        while ($row = $result->fetch_assoc()) {
+            $row['imageUrl'] = $_SERVER['REQUEST_SCHEME'] . '://' . $_SERVER['HTTP_HOST'] . '/uploads/' . $row['imageUrl'];
+            $products[] = $row;
         }
+
+        echo json_encode($products);
         break;
 
     case 'POST':
-        $name = $input['name'];
-        $description = $input['description'];
-        $price = $input['price'];
-        $imageUrl = $input['imageUrl'];
-        $cat_id = $input['cat_id'];
-        $brand = $input['brand'];
-        $model = $input['model'];
-        $specifications = $input['specifications'];
-        $stockQuantity = $input['stockQuantity'];
-        $isFeatured = $input['isFeatured'];
+        // Handle image upload and data insert
+        if (!isset($_FILES['image']) || !isset($_POST['name'])) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Missing required fields']);
+            exit;
+        }
 
-        $conn->query("INSERT INTO products (name, description, price,imageUrl,cat_id,brand, model, specifications, stockQuantity, isFeatured) VALUES ('$name', '$description', $price, '$imageUrl', '$cat_id', '$brand','$model','$specifications', '$stockQuantity', '$isFeatured')");
-        echo json_encode(["message" => "User added successfully"]);
-        break;
+        $allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
+        $image = $_FILES['image'];
 
-    case 'PUT':
-        $id = $_GET['id'];
-        $name = $input['name'];
-        $description = $input['description'];
-        $price = $input['price'];
-        $imageUrl = $input['imageUrl'];
-        $cat_id = $input['cat_id'];
-        $brand = $input['brand'];
-        $model = $input['model'];
-        $specifications = $input['specifications'];
-        $stockQuantity = $input['stockQuantity'];
-        $isFeatured = $input['isFeatured'];
-        $conn->query("UPDATE products SET name='$name',
-                     description='$description', price=$price, imageUrl=$imageUrl, cat_id=$cat_id, brand=$brand, model=$model, specification=$specifications,stockQuantity=$stockQuantity, isFeatured=$isFeatured WHERE id=$id");
-        echo json_encode(["message" => "User updated successfully"]);
-        break;
+        if (!in_array($image['type'], $allowedTypes)) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Unsupported image type']);
+            exit;
+        }
 
-    case 'DELETE':
-        $id = $_GET['id'];
-        $conn->query("DELETE FROM products WHERE id=$id");
-        echo json_encode(["message" => "User deleted successfully"]);
+        $uploadDir = 'uploads/';
+        if (!is_dir($uploadDir)) mkdir($uploadDir, 0777, true);
+
+        $ext = pathinfo($image['name'], PATHINFO_EXTENSION);
+        $filename = uniqid('prod_', true) . '.' . $ext;
+        $targetPath = $uploadDir . $filename;
+
+        if (!move_uploaded_file($image['tmp_name'], $targetPath)) {
+            http_response_code(500);
+            echo json_encode(['error' => 'Failed to upload image']);
+            exit;
+        }
+
+        // Sanitize and bind values
+        $stmt = $conn->prepare("INSERT INTO products (name, description, price, imageUrl, cat_id, brand, model, specifications, stockQuantity)
+                                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+
+        $stmt->bind_param(
+            "ssisiissi",
+            $_POST['name'],
+            $_POST['description'],
+            $_POST['price'],
+            $filename,
+            $_POST['cat_id'],
+            $_POST['brand'],
+            $_POST['model'],
+            $_POST['specifications'],
+            $_POST['stockQuantity']
+        );
+
+        if ($stmt->execute()) {
+            echo json_encode(['success' => true, 'id' => $stmt->insert_id]);
+        } else {
+            http_response_code(500);
+            echo json_encode(['error' => 'Insert failed']);
+        }
+
+        $stmt->close();
         break;
 
     default:
-        echo json_encode(["message" => "Invalid request method"]);
-        break;
+        http_response_code(405);
+        echo json_encode(['error' => 'Method not allowed']);
 }
-
 $conn->close();
