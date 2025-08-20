@@ -1,7 +1,7 @@
 use ecom;
 CREATE TABLE categories (
     id INTEGER AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(30),
+    name VARCHAR(30) NOT null, 
     description VARCHAR(60),
 );
 CREATE TABLE products (
@@ -17,18 +17,6 @@ CREATE TABLE products (
     stockQuantity INTEGER,
     createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (cat_id) REFERENCES categories(id)
-);
-
-CREATE TABLE orders (
-    id INTEGER AUTO_INCREMENT PRIMARY KEY,
-    orderNumber INTEGER,
-    customer_id INTEGER,
-    subtotal INTEGER,
-    total INTEGER,
-    status INTEGER,
-    paymentMethod TEXT,
-    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    whatsappMessageId VARCHAR(255)
 );
 CREATE TABLE order_items (
     id INTEGER AUTO_INCREMENT PRIMARY KEY,
@@ -60,6 +48,17 @@ CREATE TABLE bargain_offers (
     createdAt TIMESTAMP,
     adminResponse VARCHAR(255),
     FOREIGN KEY(product_id) REFERENCES products(id),
+    FOREIGN KEY(customer_id) REFERENCES customers(id)
+);
+CREATE TABLE orders (
+    id INTEGER AUTO_INCREMENT PRIMARY KEY,
+    customer_id INTEGER,
+    subtotal INTEGER,
+    total INTEGER,
+    status INTEGER,
+    paymentMethod TEXT,
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    whatsappMessageId VARCHAR(255),
     FOREIGN KEY(customer_id) REFERENCES customers(id)
 );
 CREATE TABLE site_settings (
