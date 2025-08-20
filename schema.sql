@@ -72,7 +72,7 @@ CREATE TABLE admin_users (
     name VARCHAR(100),
     email VARCHAR(70),
     password VARCHAR(30),
-    role VARCHAR(40),
+    role VARCHAR(40)
 );
 CREATE TABLE inventory_logs (
     id INTEGER AUTO_INCREMENT PRIMARY KEY,
