@@ -1,7 +1,7 @@
 use ecom;
 CREATE TABLE categories (
     id INTEGER AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(30) NOT null, 
+    name VARCHAR(30) NOT NULL, 
     description VARCHAR(60)
 );
 CREATE TABLE products (
@@ -33,7 +33,6 @@ CREATE TABLE bargain_offers (
     customer_id INTEGER,
     offeredPrice INTEGER,
     quantity INTEGER,
-    totalOffer INTEGER,
     message VARCHAR(255),
     status INTEGER,
     createdAt TIMESTAMP,
@@ -44,8 +43,6 @@ CREATE TABLE bargain_offers (
 CREATE TABLE orders (
     id INTEGER AUTO_INCREMENT PRIMARY KEY,
     customer_id INTEGER,
-    subtotal INTEGER,
-    total INTEGER,
     status INTEGER,
     paymentMethod TEXT,
     createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -57,8 +54,6 @@ CREATE TABLE order_items (
     order_id INTEGER,
     product_id INTEGER,
     quantity INTEGER,
-    total INTEGER,
-    productSnapshot VARCHAR(255),
     FOREIGN KEY(order_id) REFERENCES orders(id),
     FOREIGN KEY(product_id) REFERENCES products(id)
 );
@@ -76,16 +71,12 @@ CREATE TABLE admin_users (
     id INTEGER AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100),
     email VARCHAR(70),
+    password VARCHAR(30),
     role VARCHAR(40),
-    permissions VARCHAR(30),
-    isActive INTEGER,
-    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    lastLoginAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 CREATE TABLE inventory_logs (
     id INTEGER AUTO_INCREMENT PRIMARY KEY,
     product_id INTEGER,
-    action INTEGER,
     quantityChange INTEGER,
     newQuabtity INTEGER,
     reason VARCHAR(20),
