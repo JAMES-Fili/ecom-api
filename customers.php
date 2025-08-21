@@ -28,11 +28,9 @@ switch ($method) {
         $phone = $input['phone'];
         $email = $input['email'];
         $address = $input['address'];
-        $totalOrder = $input['totalOrder'];
-        $totalSpent = $input['totalSpent'];
-        $isVip= $input['isVip'];
 
-        $conn->query("INSERT INTO customers (name, phone, email,address, totalOrder, totalSpent,isVip) VALUES ('$name', '$phone', '$email', '$address', '$totalOrder', '$totalSpent','$isVip')");
+
+        $conn->query("INSERT INTO customers (name, phone, email,address) VALUES ('$name', '$phone', '$email', '$address')");
         echo json_encode(["message" => "Customers added successfully"]);
         break;
 
@@ -42,11 +40,8 @@ switch ($method) {
         $phone = $input['phone'];
         $email = $input['email'];
         $address = $input['address'];
-        $totalOrder = $input['totalOrder'];
-        $totalSpent = $input['totalSpent'];
-        $isVip= $input['isVip'];
         $conn->query("UPDATE customers SET name='$name',
-                     phone='$phone', email=$email, email= '$email', address='$address', totalOrder='$totalOrder', isVip='$isVip' WHERE id=$id");
+                     phone='$phone', email=$email, address='$address' WHERE id=$id");
         echo json_encode(["message" => "Customer updated successfully"]);
         break;
 
