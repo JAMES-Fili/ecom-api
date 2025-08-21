@@ -26,10 +26,7 @@ switch ($method) {
     case 'POST':
         $name = $input['name'];
         $description = $input['description'];
-        $isActive = $input['isActive'];
-        $sortOrder = $input['sortOrder'];
-
-        $conn->query("INSERT INTO categories (name, description, isActive, sortOrder) VALUES ('$name', '$description', '$isActive','$sortOrder')");
+        $conn->query("INSERT INTO categories (name, description) VALUES ('$name', '$description')");
         echo json_encode(["message" => "Category added successfully"]);
         break;
 
@@ -40,7 +37,7 @@ switch ($method) {
         $isActive = $input['isActive'];
         $sortOrder = $input['sortOrder'];
         $conn->query("UPDATE categories SET name='$name',
-                     description='$description', isActive='$isActive', sortOrder='$sortOrder' WHERE id=$id");
+                     description='$description' WHERE id=$id");
         echo json_encode(["message" => "Category updated successfully"]);
         break;
 
