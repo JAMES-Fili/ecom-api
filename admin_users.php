@@ -1,78 +1,60 @@
 <?php
 include 'db.php';
+
 header("Content-Type: application/json");
 
-
 $method = $_SERVER['REQUEST_METHOD'];
+$input = json_decode(file_get_contents('php://input'), true);
 
 switch ($method) {
     case 'GET':
-        // Optional: ?id= to get a specific admin
         if (isset($_GET['id'])) {
-            $id = intval($_GET['id']);
-            $stmt = $conn->prepare("SELECT id, name, email, role FROM admin_users WHERE id = ?");
-            $stmt->bind_param("i", $id);
-            $stmt->execute();
-            $result = $stmt->get_result();
-            $user = $result->fetch_assoc();
-            echo json_encode($user ?: ['error' => 'Admin user not found']);
-            $stmt->close();
+            $id = $_GET['id'];
+            $result = $conn->query("SELECT * FROM admin_users WHERE id=$id");
+            $data = $result->fetch_assoc();
+            echo json_encode($data);
         } else {
-            $result = $conn->query("SELECT id, name, email, role FROM admin_users");
-            $users = [];
+            $result = $conn->query("SELECT * FROM admin_users");
+            $admin_users = [];
             while ($row = $result->fetch_assoc()) {
-                $users[] = $row;
+                $admin_users[] = $row;
             }
-            echo json_encode($users);
+            echo json_encode($admin_users);
         }
         break;
 
     case 'POST':
-        // Check for required fields
-        $required = ['name', 'email', 'password', 'role'];
-        foreach ($required as $field) {
-            if (!isset($_POST[$field])) {
-                http_response_code(400);
-                echo json_encode(['error' => "Missing field: $field"]);
-                exit;
-            }
-        }
+        $name = $input['name'];
+        $email = $input['email'];
+        $password = $input['password'];
+        $role = $input['role'];
 
-        $name = $_POST['name'];
-        $email = $_POST['email'];
-        $password = password_hash($_POST['password'], PASSWORD_BCRYPT);
-        $role = $_POST['role'];
 
-        // Check if email already exists
-        $stmt = $conn->prepare("SELECT id FROM admin_users WHERE email = ?");
-        $stmt->bind_param("s", $email);
-        $stmt->execute();
-        $stmt->store_result();
-        if ($stmt->num_rows > 0) {
-            http_response_code(409);
-            echo json_encode(['error' => 'Email already registered']);
-            $stmt->close();
-            exit;
-        }
-        $stmt->close();
 
-        // Insert new admin user
-        $stmt = $conn->prepare("INSERT INTO admin_users (name, email, password, role) VALUES (?, ?, ?, ?)");
-        $stmt->bind_param("ssss", $name, $email, $password, $role);
+        $conn->query("INSERT INTO admin_users (name,email,password,role) VALUES ('$name','$email','$password' '$role')");
+        echo json_encode(["message" => "Admin User added successfully"]);
+        break;
 
-        if ($stmt->execute()) {
-            echo json_encode(['success' => true, 'id' => $stmt->insert_id]);
-        } else {
-            http_response_code(500);
-            echo json_encode(['error' => 'Insert failed']);
-        }
+    case 'PUT':
+        $id = $_GET['id'];
+        $name = $input['name'];
+        $email = $input['email'];
+        $password = $input['password'];
+        $role = $input['role'];
+        $conn->query("UPDATE admin_user SET name='$name',
+         email='$email',password='$password', role='$role' WHERE id=$id");
+        echo json_encode(["message" => "Admin User updated successfully"]);
+        break;
 
-        $stmt->close();
+    case 'DELETE':
+        $id = $_GET['id'];
+        $conn->query("DELETE FROM admin_user WHERE id=$id");
+        echo json_encode(["message" => "Admin User deleted successfully"]);
         break;
 
     default:
-        http_response_code(405);
-        echo json_encode(['error' => 'Method not allowed']);
+        echo json_encode(["message" => "Invalid request method"]);
+        break;
 }
 
 $conn->close();

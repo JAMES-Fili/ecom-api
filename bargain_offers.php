@@ -1,67 +1,61 @@
 <?php
 include 'db.php';
+
 header("Content-Type: application/json");
 
-
 $method = $_SERVER['REQUEST_METHOD'];
+$input = json_decode(file_get_contents('php://input'), true);
 
 switch ($method) {
     case 'GET':
-        // Get all bargain offers (join with product and customer if needed)
-        $sql = "SELECT * FROM bargain_offers ORDER BY createdAt DESC";
-        $result = $conn->query($sql);
-
-        $offers = [];
-        while ($row = $result->fetch_assoc()) {
-            $offers[] = $row;
+        if (isset($_GET['id'])) {
+            $id = $_GET['id'];
+            $result = $conn->query("SELECT * FROM bargain_offers WHERE id=$id");
+            $data = $result->fetch_assoc();
+            echo json_encode($data);
+        } else {
+            $result = $conn->query("SELECT * FROM bargain_offers");
+            $users = [];
+            while ($row = $result->fetch_assoc()) {
+                $users[] = $row;
+            }
+            echo json_encode($users);
         }
-
-        echo json_encode($offers);
         break;
 
     case 'POST':
-        // Validate required fields
-        $required = ['product_id', 'customer_id', 'offeredPrice', 'quantity'];
+        $product_id =$input['product_id'];
+        $customer_id = $input['customer_id'];
+        $offeredPrice = $input['offeredPrice'];
+        $quantity = $input['quantity'];
+        $message = $input['message'];
+        $status = $input['status'];
+        $adminResponse = $input['adminResponse'];
 
-        foreach ($required as $field) {
-            if (!isset($_POST[$field])) {
-                http_response_code(400);
-                echo json_encode(['error' => "Missing field: $field"]);
-                exit;
-            }
-        }
+        $conn->query("INSERT INTO bargain_offers (product_id,customer_id, status, paymentMethod, whatsappMessageId) VALUES ('$product_id','$customer_id', '$status','$paymentMethod','$whatsappMessageId')");
+        echo json_encode(["message" => "Category added successfully"]);
+        break;
 
-        // Optional fields
-        $message = isset($_POST['message']) ? $_POST['message'] : '';
-        $status = isset($_POST['status']) ? $_POST['status'] : 0;
-        $adminResponse = isset($_POST['adminResponse']) ? $_POST['adminResponse'] : '';
+    case 'PUT':
+        $id = $_GET['id'];
+        $customer_id = $input['customer_id'];
+        $status = $input['status'];
+        $paymentMethod = $input['paymentMethod'];
+        $whatsappMessageId = $input['whatsappMessageId'];
 
-        $stmt = $conn->prepare("INSERT INTO bargain_offers (product_id, customer_id, offeredPrice, quantity, message, status, adminResponse)
-                                VALUES (?, ?, ?, ?, ?, ?, ?)");
-        $stmt->bind_param(
-            "iiiisis",
-            $_POST['product_id'],
-            $_POST['customer_id'],
-            $_POST['offeredPrice'],
-            $_POST['quantity'],
-            $message,
-            $status,
-            $adminResponse
-        );
+        $conn->query("UPDATE baragain_offers SET  customer_id='$customer_id',status='$status',paymentMethod='$paymentMethod',whatsappMessageId='$whatsappMessageId' WHERE id=$id");
+        echo json_encode(["message" => "Bargain updated successfully"]);
+        break;
 
-        if ($stmt->execute()) {
-            echo json_encode(['success' => true, 'id' => $stmt->insert_id]);
-        } else {
-            http_response_code(500);
-            echo json_encode(['error' => 'Insert failed']);
-        }
-
-        $stmt->close();
+    case 'DELETE':
+        $id = $_GET['id'];
+        $conn->query("DELETE FROM bargain_offers WHERE id=$id");
+        echo json_encode(["message" => "Bargain deleted successfully"]);
         break;
 
     default:
-        http_response_code(405);
-        echo json_encode(['error' => 'Method not allowed']);
+        echo json_encode(["message" => "Invalid request method"]);
+        break;
 }
 
 $conn->close();

@@ -1,55 +1,58 @@
 <?php
 include 'db.php';
+
 header("Content-Type: application/json");
 
-
 $method = $_SERVER['REQUEST_METHOD'];
+$input = json_decode(file_get_contents('php://input'), true);
 
 switch ($method) {
     case 'GET':
-        $sql = "SELECT * FROM order_items";
-        if (isset($_GET['order_id'])) {
-            $order_id = intval($_GET['order_id']);
-            $sql .= " WHERE order_id = $order_id";
+        if (isset($_GET['id'])) {
+            $id = $_GET['id'];
+            $result = $conn->query("SELECT * FROM orders WHERE id=$id");
+            $data = $result->fetch_assoc();
+            echo json_encode($data);
+        } else {
+            $result = $conn->query("SELECT * FROM orders");
+            $users = [];
+            while ($row = $result->fetch_assoc()) {
+                $users[] = $row;
+            }
+            echo json_encode($users);
         }
-
-        $result = $conn->query($sql);
-        $items = [];
-        while ($row = $result->fetch_assoc()) {
-            $items[] = $row;
-        }
-        echo json_encode($items);
         break;
 
     case 'POST':
-        // Validate input
-        if (!isset($_POST['order_id'], $_POST['product_id'], $_POST['quantity'])) {
-            http_response_code(400);
-            echo json_encode(['error' => 'Missing order_id, product_id, or quantity']);
-            exit;
-        }
+        $customer_id = $input['customer_id'];
+        $status = $input['status'];
+        $paymentMethod = $input['paymentMethod'];
+        $whatsappMessageId = $input['whatsappMessageId'];
 
-        $order_id = intval($_POST['order_id']);
-        $product_id = intval($_POST['product_id']);
-        $quantity = intval($_POST['quantity']);
+        $conn->query("INSERT INTO orders (customer_id, status, paymentMethod, whatsappMessageId) VALUES ('$customer_id', '$status','$paymentMethod','$whatsappMessageId')");
+        echo json_encode(["message" => "Order added successfully"]);
+        break;
 
-        // Insert into DB
-        $stmt = $conn->prepare("INSERT INTO order_items (order_id, product_id, quantity) VALUES (?, ?, ?)");
-        $stmt->bind_param("iii", $order_id, $product_id, $quantity);
+    case 'PUT':
+        $id = $_GET['id'];
+        $customer_id = $input['customer_id'];
+        $status = $input['status'];
+        $paymentMethod = $input['paymentMethod'];
+        $whatsappMessageId = $input['whatsappMessageId'];
 
-        if ($stmt->execute()) {
-            echo json_encode(['success' => true, 'id' => $stmt->insert_id]);
-        } else {
-            http_response_code(500);
-            echo json_encode(['error' => 'Insert failed']);
-        }
+        $conn->query("UPDATE orders SET  customer_id='$customer_id',status='$status',paymentMethod='$paymentMethod',whatsappMessageId='$whatsappMessageId' WHERE id=$id");
+        echo json_encode(["message" => "Order updated successfully"]);
+        break;
 
-        $stmt->close();
+    case 'DELETE':
+        $id = $_GET['id'];
+        $conn->query("DELETE FROM categories WHERE id=$id");
+        echo json_encode(["message" => "Order deleted successfully"]);
         break;
 
     default:
-        http_response_code(405);
-        echo json_encode(['error' => 'Method not allowed']);
+        echo json_encode(["message" => "Invalid request method"]);
+        break;
 }
 
 $conn->close();
